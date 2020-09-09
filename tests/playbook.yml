@@ -1,9 +1,5 @@
 ---
 
 - hosts: all
-  sudo: true
-
-  vars:
-
   roles:
-    - "../../igor_mukhin.___"
+    - "../../ansible-appmanutil"
