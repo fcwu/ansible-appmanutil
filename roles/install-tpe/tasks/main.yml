@@ -17,6 +17,7 @@
       - curl
       - jq
     state: present
+  become: true
 
 - name: Find latest package in SKU "{{ SKU }}" and Branch "{{ BRANCH }}"
   shell: |
