@@ -51,7 +51,9 @@
     /tmp/appmanutil edge run "sudo dpkg -i /tmp/update.deb"
 
 - name: Wait to start installing
-  command: systemctl is-active update
+  shell: |
+    export APPMAN_HOST={{ IP }}
+    /tmp/appmanutil edge run sudo systemctl is-active update
   register: result
   until: result.rc == 0
   retries: 40
