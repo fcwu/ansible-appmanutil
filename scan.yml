@@ -1,0 +1,7 @@
+- hosts: all
+  gather_facts: false
+  vars:
+    CIDR: 10.144.48.0/23
+    BRANCH: scan
+  roles:
+    - role: scan

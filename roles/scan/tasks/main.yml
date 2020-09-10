@@ -1,0 +1,20 @@
+---
+- name: Check appmanutil
+  stat:
+    path: /tmp/appmanutil
+  register: appmanutil
+
+- name: Download appmanutil
+  get_url:
+    url: http://s3.moxa.online/v3/edge/builds/thanos-sysman/release/iotedge/v2.1.0/1592/amd64/appmanutil
+    dest: /tmp/appmanutil
+    mode: '0755'
+  when: not appmanutil.stat.exists
+
+- name: Wait result
+  shell: |
+    /tmp/appmanutil edge scan {{ CIDR }}
+  register: output
+
+- name: Print
+  debug: msg={{ output.stdout }}

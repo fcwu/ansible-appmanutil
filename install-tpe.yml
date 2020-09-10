@@ -1,0 +1,8 @@
+- hosts: all
+  gather_facts: false
+  roles:
+    - role: instapp-tpe
+      vars:
+        SKU: aig
+        IP: 10.144.48.1
+        BRANCH: release/iotedge/v2.1.0
