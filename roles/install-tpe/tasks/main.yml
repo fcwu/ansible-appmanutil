@@ -50,7 +50,14 @@
     export APPMAN_HOST={{ IP }}
     /tmp/appmanutil edge run "sudo dpkg -i /tmp/update.deb"
 
-- name: Wait ready
+- name: Wait to start installing
+  command: systemctl is-active update
+  register: result
+  until: result.rc == 0
+  retries: 40
+  delay: 3
+
+- name: Wait installation
   shell: |
     s1=$(curl -s -k -X GET https://{{ IP }}:8443/api/_/welcome | jq -r .data.state)
     s2=$(curl -s -k -X GET https://{{ IP }}:8443/api/_/welcome | jq -r .data.stateInternal)
