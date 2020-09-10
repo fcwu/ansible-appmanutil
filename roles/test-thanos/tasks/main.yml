@@ -1,0 +1,119 @@
+---
+- name: clone test cases
+  git:
+    repo: https://github.com/MOXA-ISD/thanos-sysman
+    dest: /tmp/thanos-sysman-develop
+    depth: 1
+    force: true
+
+- name: show available test cases
+  block:
+    - shell: |
+        cd /tmp/thanos-sysman-develop/test/
+        ls -1 test_*.yaml
+      register: result
+    - debug: msg={{ result.stdout }}
+
+- name: test
+  block:
+    - shell: |
+        cd /tmp/thanos-sysman-develop/test
+
+        cat <<EOF > includes.yaml
+        name: Common test information
+        description: Login information for test server
+        # Variables should just be a mapping of key: value pairs
+        variables:
+          host: https://{{ IP }}:8443
+          url_endpoint: https://{{ IP }}:8443/api/v1
+          url_endpoint2: http://{{ IP }}/api/v1
+          password: MOXA1234567
+        EOF
+
+        py.test \
+          --tavern-global-cfg includes.yaml \
+          -m "{{ mark | default('') }}" \
+          -- {{ files | default('test_*_sysman.tavern.yaml') }}
+      register: result
+    - debug: msg={{ result.stdout }}
+
+
+
+# - name: Check appmanutil
+#   stat:
+#     path: /tmp/appmanutil
+#   register: appmanutil
+
+# - name: Download appmanutil
+#   get_url:
+#     url: http://s3.moxa.online/v3/edge/builds/thanos-sysman/release/iotedge/v2.1.0/1592/amd64/appmanutil
+#     dest: /tmp/appmanutil
+#     mode: '0755'
+#   when: not appmanutil.stat.exists
+
+# - name: Install tools
+#   apt:
+#     name:
+#       - curl
+#       - jq
+#     state: present
+#   become: true
+
+# - name: Find latest package in SKU "{{ SKU }}" and Branch "{{ BRANCH }}"
+#   shell: |
+#     revision=$(curl -s -H 'accept: application/json' http://s3.moxa.online/v3/edge/builds/edge-core-update/{{ BRANCH }}/ | jq -r '.[].name' | sort -n | tail -1)
+#     deb_filename=$(curl -s -H "accept: application/json" http://s3.moxa.online/v3/edge/builds/edge-core-update/{{ BRANCH }}/${revision}/ | jq -r --arg regex ".*_.*-{{ SKU }}_armhf.deb$" '.[].name | select(test($regex))')
+#     echo -n http://s3.moxa.online/v3/edge/builds/edge-core-update/{{ BRANCH }}/${revision}/${deb_filename}
+#   register: package
+
+# - name: Prepare device environment
+#   shell: |
+#     set -xe
+#     export APPMAN_HOST={{ IP }}
+#     /tmp/appmanutil edge run "mkdir -p /etc/appman/default"
+#     /tmp/appmanutil edge run "echo '{\"enable\":true,\"port\":22}' | sudo tee /etc/appman/default/sshserver"
+#     /tmp/appmanutil edge run "mkdir -p /home/moxa/device/ethernets/"
+#     /tmp/appmanutil edge run "echo '[{\"id\":1,\"wan\":true,\"enable\":true,\"enableDhcp\":false,\"ip\":\"{{ IP }}\",\"netmask\":\"255.255.252.0\",\"gateway\":\"10.144.51.254\",\"dns\":[\"8.8.8.8\"],\"status\":\"connected\",\"mac\":\"00:90:e8:80:3a:57\",\"subnet\":\"10.144.48.0\",\"broadcast\":\"10.144.51.255\",\"type\":\"ethernets\",\"name\":\"eth0\",\"displayName\":\"LAN1\"},{\"id\":2,\"wan\":false,\"enable\":true,\"enableDhcp\":false,\"ip\":\"192.168.4.127\",\"netmask\":\"255.255.255.0\",\"gateway\":\"192.168.4.254\",\"dns\":[],\"status\":\"disconnected\",\"mac\":\"00:90:e8:80:3a:58\",\"subnet\":\"192.168.4.0\",\"broadcast\":\"192.168.4.255\",\"type\":\"ethernets\",\"name\":\"eth1\",\"displayName\":\"LAN2\"}]' | sudo tee /home/moxa/device/ethernets/configuration.json"
+#     /tmp/appmanutil edge run "echo 'nameserver 10.144.48.106' | sudo tee /etc/resolv.conf"
+#     /tmp/appmanutil edge run "sudo touch /etc/development"
+#   register: output
+
+# - name: Download update package {{ package.stdout }}
+#   shell: |
+#     set -xe
+#     export APPMAN_HOST={{ IP }}
+#     /tmp/appmanutil edge run "wget {{ package.stdout }} -O /tmp/update.deb"
+
+# - name: Install update package
+#   shell: |
+#     set -xe
+#     export APPMAN_HOST={{ IP }}
+#     /tmp/appmanutil edge run "sudo dpkg -i /tmp/update.deb"
+
+# - name: Wait to start installing
+#   shell: |
+#     export APPMAN_HOST={{ IP }}
+#     /tmp/appmanutil edge run sudo systemctl is-active update
+#   register: result
+#   until: result.rc == 0
+#   retries: 40
+#   delay: 3
+
+# - name: Wait installation
+#   shell: |
+#     s1=$(curl -s -k -X GET https://{{ IP }}:8443/api/_/welcome | jq -r .data.state)
+#     s2=$(curl -s -k -X GET https://{{ IP }}:8443/api/_/welcome | jq -r .data.stateInternal)
+#     if [ "$s1" != "normal" ]; then
+#       echo $s1 $s2
+#       exit 1
+#     fi
+#     if [ "$s2" != "ready" ]; then
+#       echo $s1 $s2
+#       exit 2
+#     fi
+#     exit 0
+#   register: result
+#   until: result.rc == 0
+#   retries: 400
+#   delay: 3
+#   tags: ["wait"]

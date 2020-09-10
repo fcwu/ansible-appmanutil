@@ -1,0 +1,6 @@
+- hosts: all
+  gather_facts: false
+  vars:
+    IP: 10.144.48.1
+  roles:
+    - role: test-thanos

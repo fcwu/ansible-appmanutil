@@ -11,10 +11,11 @@
     mode: '0755'
   when: not appmanutil.stat.exists
 
-- name: Wait result
-  shell: |
-    /tmp/appmanutil edge scan {{ CIDR }}
-  register: output
+# - name: Wait result
+#   shell: |
+#     /tmp/appmanutil edge scan {{ CIDR }}
+#   register: output
 
 - name: Print
-  debug: msg={{ output.stdout }}
+  debug: msg={{ item }}
+  with_lines: /tmp/appmanutil edge scan {{ CIDR }}
