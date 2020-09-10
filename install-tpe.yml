@@ -5,4 +5,4 @@
     IP: 10.144.48.1
     BRANCH: release/iotedge/v2.1.0
   roles:
-    - role: instapp-tpe
+    - role: install-tpe
